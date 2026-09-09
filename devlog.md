@@ -91,3 +91,11 @@ which will perform only one part of the instruction every clock cycle, or tick, 
 
 ### Next
 I need to design the first few basic control flow instructions, then I'll probably devlog there. Math instructions come after that, which requires me to learn BINARY OPERATORS AND BOOLEAN MATH OH GOD OH GOD ODGSJHNfhm ,     ,
+
+=================
+
+okay ! i've got most of the instructions I think I should need for now, and that totals to 71 distinct ones. Far from the 256 the processor supports, so that's good! most of them can read or write registers, memory, or an immediate number in the code.
+
+I can always add more later as need be :droidtehe: but now i have to implement them!!
+
+eventually, I'll write an assembler and linker to do this automatically. For now though I'll have to write bytecode manually :fear: also going to assign these to specific opcodes first...
