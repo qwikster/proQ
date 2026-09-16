@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from enum import IntEnum
 from typing import TYPE_CHECKING, ClassVar
 
 from proq.isa.set import Op
@@ -28,8 +29,15 @@ class Instruction:
         self.mu = mu
         self.registers = registers
 
-    def operand(self, idx: int = 1): # 1-indexed
+    def operand(self, idx: int = 1) -> int: # 1-indexed
         return self.registers.PC + idx
+
+    def pci(self, amt: int = 1): # 1-indexed
+        self.registers.PC += amt
 
     def execute(self) -> Iterator[None]:
         yield
+
+class DataMode(IntEnum):
+    R_BYTE_W_REG = 0x00
+    BYTE WORD DWORD REGISTER IMMEDIATE

@@ -42,12 +42,12 @@ class CU:
                 return
 
             instance = instruction(self.mu, self.alu, self.registers)
-            self.registers.PC += 0x0001
             self.logger.cu(f"Running instruction {hex(opcode, 2)} ({instruction.__name__})")
 
             self.iterable = instance.execute()
 
         try:
             next(self.iterable)
+            self.logger.clock("Next cycle")
         except StopIteration:
             self.iterable = None
