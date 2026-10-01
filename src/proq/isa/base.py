@@ -40,4 +40,4 @@ class Instruction:
 
 class DataMode(IntEnum):
     R_BYTE_W_REG = 0x00
-    BYTE WORD DWORD REGISTER IMMEDIATE
+    # BYTE WORD DWORD REGISTER IMMEDIATE

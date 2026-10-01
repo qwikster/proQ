@@ -7,7 +7,6 @@ class Op(IntEnum):
 
 
 
-
     NOP = 0xF0
     CPUID = 0xFE
     HALT = 0xFF

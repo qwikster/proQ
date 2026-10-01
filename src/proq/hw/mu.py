@@ -96,3 +96,12 @@ class MU:
             device.write(addr - base_addr, value)
         except Exception as e:  # noqa: BLE001
             raise EmulatorMemoryError(f"error writing to {hex(addr)}: {e}")
+
+    # big endian accessors
+    def read_word(self, low_byte: int) -> int:
+        high_byte = self.read(low_byte + 1)
+        return (high_byte << 8) | low_byte
+
+    def write_word(self, low_byte: int, value: int) -> None:
+        self.write(low_byte + 1, value >> 8)
+        self.write(low_byte, value & 0xFF)

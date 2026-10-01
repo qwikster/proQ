@@ -1,5 +1,3 @@
-from enum import Enum
-
 from proq.hw.alu import ALU
 from proq.hw.cu import CU
 from proq.hw.mu import MU, RAM, ROM, StdoutOutput
