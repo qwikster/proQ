@@ -13,4 +13,4 @@ class JMP(Instruction):
         loc_l = self.operand(1)
         loc_h = self.operand(2)
         yield
-        self.registers.PC = # NEED RWORD AND WWORD
+        # self.registers.PC = ... # NEED RWORD AND WWORD

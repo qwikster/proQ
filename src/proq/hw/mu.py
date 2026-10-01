@@ -8,7 +8,6 @@ log: Logger
 
 class MemoryDevice:
     def read(self, addr: int) -> int:
-        log.setup("meow looped")
         raise NotImplementedError("this memory device does not have anything to read!")
     def write(self, addr: int, value: int):
         raise NotImplementedError("this memory device does not have anything to write!")

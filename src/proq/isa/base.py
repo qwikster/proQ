@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from enum import IntEnum
 from typing import TYPE_CHECKING, ClassVar
 
 from proq.isa.set import Op
@@ -37,7 +36,3 @@ class Instruction:
 
     def execute(self) -> Iterator[None]:
         yield
-
-class DataMode(IntEnum):
-    R_BYTE_W_REG = 0x00
-    BYTE WORD DWORD REGISTER IMMEDIATE

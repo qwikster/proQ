@@ -9,6 +9,7 @@ def entry():
     parser.add_argument("binary", type=str, help = "machine code to run")
     parser.add_argument("--memsize", "--mem", "-m", type=int, default = 4096, help = "size of RAM in bytes")
     parser.add_argument("--romsize", "--rom", "-r", type=int, default = 57344, help = "size of ROM in bytes")
+    parser.add_argument("--reset", "--start", "-s", type=int, default = 0, help = "memory address containing start of program")
 
     args = parser.parse_args()
 
