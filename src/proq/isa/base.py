@@ -36,3 +36,7 @@ class Instruction:
 
     def execute(self) -> Iterator[None]:
         yield
+
+class DataMode(IntEnum):
+    R_BYTE_W_REG = 0x00
+    # BYTE WORD DWORD REGISTER IMMEDIATE
