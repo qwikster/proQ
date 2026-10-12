@@ -37,7 +37,7 @@ class CPU:
         self.registers = Registers(self.log, stack_addr = romsize + memsize - 1, debug = flag_debug)
 
         # Instructions
-        self.alu = ALU()
+        self.alu = ALU(self.registers)
         self.cu = CU(self.alu, self.mu, self.registers, logger = logger)
 
     def tick(self):

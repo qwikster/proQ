@@ -27,10 +27,11 @@ class CU:
         self.iterable = None
 
     def tick(self, interrupt: MutableInt):
+        self.logger.clock("Next cycle")
+
         if self.iterable:
             try:
                 next(self.iterable)
-                self.logger.clock("Next cycle")
                 return
             except StopIteration:
                 pass
@@ -40,12 +41,20 @@ class CU:
             input()
             return
 
-            instance = instruction(self.mu, self.alu, self.registers)
-            self.logger.cu(f"Running instruction {hex(opcode, 2)} ({instruction.__name__})")
-            self.iterable = instance.execute()
+        opcode = self.mu.read(self.registers.PC)
+        self.registers.IR = opcode
+        instruction = Instruction.registry.get(opcode)
+
+        if not instruction:
+            self.logger.cu(f"Invalid instruction {hex(opcode, 2)}")
+            interrupt.set(0x01) # invalid opcode
+            return
+
+        instance = instruction(self.mu, self.alu, self.registers)
+        self.logger.cu(f"Running instruction {hex(opcode, 2)} ({instruction.__name__})")
+        self.iterable = instance.execute()
 
         try:
             next(self.iterable)
-            self.logger.clock("Next cycle")
         except StopIteration:
             self.iterable = None
