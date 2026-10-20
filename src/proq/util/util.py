@@ -1,3 +1,6 @@
+from enum import IntEnum
+
+
 _hex = hex
 def hex(val: int, pad: int = 4) -> str:
     sign = "-" if val < 0 else ""
@@ -18,3 +21,27 @@ class MutableInt:
 
     def __index__(self):
         return self.value
+
+class TypeOperand(IntEnum):
+    IMMEDIATE = 0
+    REGISTER  = 1
+    MEMORY_DR = 2 # direct [Addr]
+    MEMORY_ID = 3 # indirect [Reg]
+
+class RegisterOperand(IntEnum):
+    REG_0 = 0
+    REG_1 = 1
+    REG_2 = 2
+    REG_3 = 3
+    REG_4 = 4
+    REG_5 = 5
+    REG_6 = 6
+    REG_7 = 7
+    REG_8 = 8
+    REG_9 = 9
+    REG_10 = 10
+    REG_11 = 11
+    REG_PC = 12
+    REG_IR = 13
+    REG_SP = 14
+    REG_FLAG = 15

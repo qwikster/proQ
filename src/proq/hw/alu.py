@@ -1,6 +1,7 @@
 from enum import IntEnum
 
 from proq.hw.register import Registers
+from proq.util.exceptions import InstructionNotImplementedError
 
 # i'm so sorry anyone that needs to figure this out, i'm too stupid to actually understand this, I just implemented x86's rules, best of luck to ye
 
@@ -77,7 +78,7 @@ class ALU:
                 msb_mask = 1 << (self.size - 1)
                 self.flags.SF = bool(result & msb_mask)
                 self.flags.ZF = (result == 0)
-                self.flags.CF = bool((a >> (self.mask - b)) & 1) if b <= self.size else False
+                self.flags.CF = bool((a >> (self.size - b)) & 1) if b <= self.size else False
                 self.flags.OF = (self.flags.SF != self.flags.CF) if b == 1 else False
 
             case Ops.SHR:
@@ -86,7 +87,7 @@ class ALU:
 
                 result = (a >> b) & self.mask
 
-                self.flags.CF = bool((a >> (b - 1)) & 1) if b <+ self.size else False
+                self.flags.CF = bool((a >> (b - 1)) & 1) if b <= self.size else False
                 self.flags.SF = False
                 self.flags.ZF = (result == 0)
                 self.flags.OF = bool(a & (1 << (self.size - 1))) if b == 1 else False
@@ -101,7 +102,7 @@ class ALU:
                 low = (a >> (self.size - shift)) & self.mask
                 result = high | low
 
-                self.flags.CF = bool(result & a)
+                self.flags.CF = bool(result & 1)
 
                 if b == 1:
                     msb = 1 << (self.size - 1)
@@ -148,7 +149,7 @@ class ALU:
                 neg = bool(a & (1 << (self.size - 1)))
 
                 if neg:
-                    padding = (self.mask << (self.size - b)) & self.mask
+                    padding = (self.mask << (self.size - min(b, 16))) & self.mask
                     result = (a >> b) | padding
                 else:
                     result = (a >> b) & self.mask
@@ -157,5 +158,7 @@ class ALU:
                 self.flags.ZF = (result == 0)
                 self.flags.OF = False
 
+            case _:
+                return InstructionNotImplementedError(f"operation {op} not found :(")
 
         return result & self.mask
