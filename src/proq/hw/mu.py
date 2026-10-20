@@ -70,6 +70,8 @@ class MU:
         self.starts = []
         self.ends = []
 
+        self.halted = False
+
         self.log.setup("created memory unit")
 
     def map_device(self, start: int, end: int, device: MemoryDevice) -> None:
@@ -105,10 +107,11 @@ class MU:
             raise EmulatorMemoryError(f"error writing to {hex(addr)}: {e}")
 
     # big endian accessors
-    def read_word(self, low_byte: int) -> int:
-        high_byte = self.read(low_byte + 1)
+    def read_word(self, address: int) -> int:
+        high_byte = self.read(address)
+        low_byte = self.read(address + 1)
         return (high_byte << 8) | low_byte
 
-    def write_word(self, low_byte: int, value: int) -> None:
-        self.write(low_byte + 1, value >> 8)
-        self.write(low_byte, value & 0xFF)
+    def write_word(self, address: int, value: int) -> None:
+        self.write(address, value >> 8)
+        self.write(address + 1, value & 0xFF)

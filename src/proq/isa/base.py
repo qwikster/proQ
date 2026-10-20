@@ -33,6 +33,7 @@ class Instruction:
 
     def pci(self, amt: int = 1): # 1-indexed
         self.registers.PC += amt
+        self.registers.PC &= 0xFFFF
 
     def execute(self) -> Iterator[None]:
         yield

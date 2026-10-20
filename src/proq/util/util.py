@@ -1,6 +1,7 @@
+from collections import deque
 from enum import IntEnum
-from typing import Union
 
+from proq.util.exceptions import InvalidModeByteError
 
 _hex = hex
 def hex(val: int, pad: int = 4) -> str:
@@ -22,6 +23,27 @@ class MutableInt:
 
     def __index__(self):
         return self.value
+
+class Interrupts:
+    def __init__(self, value: int = 0):
+        self.queue = deque()
+
+    def new(self, value: int):
+        self.queue.append(value)
+
+    def get(self):
+        return self.queue.popleft()
+
+    def check_hw(self):
+        if len(self.queue) == 0:
+            return False
+        return self.queue[0] <= 0x0F
+
+    def __len__(self):
+        return len(self.queue)
+
+    def __call__(self, value: int):
+        self.new(value)
 
 class TypeOperand(IntEnum):
     IMMEDIATE = 0
@@ -51,6 +73,8 @@ def decode_mode_bytes(byte: int, reg: bool = False) -> tuple[TypeOperand, TypeOp
     dst = (byte >> 4) & 0b1111 # left (upper) bytes
     src = byte & 0b1111 # right (lower) bytes
     if not reg:
+        if dst >= len(TypeOperand) or src >= len(TypeOperand):
+            raise InvalidModeByteError
         return (TypeOperand(dst), TypeOperand(src))
     else:
         return (RegisterOperand(dst), RegisterOperand(src))

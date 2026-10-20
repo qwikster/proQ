@@ -1,3 +1,6 @@
+import sys
+from time import sleep
+
 import proq.isa.instructions  # noqa: F401 # Have to add this to force it to run proq.isa.instructions.__init__.py n do the stuff
 from proq.hw.alu import ALU
 from proq.hw.mu import MU
@@ -6,7 +9,7 @@ from proq.isa.base import Instruction
 from proq.isa.set import Op
 from proq.util.exceptions import InstructionNotImplementedError
 from proq.util.logging import Logger
-from proq.util.util import MutableInt, hex
+from proq.util.util import Interrupts, hex
 
 
 class CU:
@@ -26,32 +29,38 @@ class CU:
 
         self.iterable = None
 
-    def tick(self, interrupt: MutableInt):
-        self.logger.clock("Next cycle")
-
+    def tick(self, interrupt: Interrupts):
         if self.iterable:
             try:
                 next(self.iterable)
+                self.logger.clock("Next cycle")
                 return
             except StopIteration:
                 pass
 
-        if interrupt.value != 0:
-            interrupt.value = 0 # reset
-            if not self.registers.flags.IF:
+        if self.mu.halted:
+            if (len(interrupt) != 0 and self.registers.flags.IF) or interrupt.check_hw():
                 pass
-            self.logger.interrupt(f"loading interrupt {hex(int(interrupt), 2)}")
-            self.registers.PC = self.mu.read(0xF100 + interrupt.value)
-            self.registers.flags.IF = False
-            self.registers.flags.TF = False
+            else:
+                if self.registers.flags.IF:
+                    self.logger.clock("Interrupts masked and HALTed, exiting!")
+                    sys.exit(0)
+                sleep(0.05)
+                return
+
+        if (len(interrupt) != 0 and self.registers.flags.IF) or interrupt.check_hw():
+            intp = interrupt.get()
+            self.logger.interrupt(f"loading interrupt {hex(int(intp), 2)}")
 
             # push flags and PC
             self.registers.SP -= 1
             self.mu.write(self.registers.SP, self.registers.flags.export_int())
-            self.registers.SP -= 1
-            self.mu.write(self.registers.SP, (self.registers.PC >> 8) & 0xFF) # high
-            self.registers.SP -= 1
-            self.mu.write(self.registers.SP, self.registers.PC & 0xFF) # low
+            self.registers.SP -= 2
+            self.mu.write_word(self.registers.SP, self.registers.PC)
+
+            self.registers.PC = self.mu.read(0xF100 + intp)
+            self.registers.flags.IF = False
+            self.registers.flags.TF = False
 
         opcode = self.mu.read(self.registers.PC)
         self.registers.IR = opcode
@@ -59,7 +68,7 @@ class CU:
 
         if not instruction:
             self.logger.cu(f"Invalid instruction {hex(opcode, 2)}")
-            interrupt.set(0x01) # invalid opcode
+            interrupt(0x01) # invalid opcode
             return
 
         instance = instruction(self.mu, self.alu, self.registers)

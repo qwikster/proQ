@@ -11,8 +11,10 @@ class NOP(Instruction):
 
 class HALT(Instruction):
     def execute(self) -> Iterator[None]:
-        sleep(0.01) # cpu spinny
-        yield # do not increment pc
+        self.pci()
+        self.mu.halted = True
+        self.mu.log.cu("HALTed, CTRL+C to quit")
+        yield
 
 class CPUID(Instruction): # yea idk what to do here
     def execute(self) -> Iterator[None]:

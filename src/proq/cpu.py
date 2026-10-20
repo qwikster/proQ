@@ -4,7 +4,7 @@ from proq.hw.mu import IVT, MU, RAM, ROM, ResetBytes, StdoutOutput
 from proq.hw.register import Registers
 from proq.util.exceptions import EmulatorMemoryError
 from proq.util.logging import Logger
-from proq.util.util import MutableInt, hex
+from proq.util.util import Interrupts, hex
 
 MAX_MEMORY = 61440
 
@@ -19,8 +19,9 @@ class CPU:
         start_pos: int = 0x0000
     ):
         self.log = logger
+        self.flag_debug = flag_debug
 
-        self.interrupt = MutableInt(0x00) # hardware interrupt line
+        self.interrupt = Interrupts() # hardware interrupt line
         self.cycle = 0
 
         # Memory
@@ -32,7 +33,7 @@ class CPU:
         self.mu.map_device(romsize, romsize + memsize - 1, RAM(size = memsize))
         self.mu.map_device(0xF000, 0xF000, StdoutOutput())
         self.mu.map_device(0xFFFE, 0xFFFF, ResetBytes(start_pos))
-        self.mu.map_device(0xF100, 0xF200, IVT())
+        self.mu.map_device(0xF100, 0xF1FF, IVT())
 
         # Registers
         self.registers = Registers(self.log, stack_addr = romsize + memsize - 1, debug = flag_debug)

@@ -159,6 +159,6 @@ class ALU:
                 self.flags.OF = False
 
             case _:
-                return InstructionNotImplementedError(f"operation {op} not found :(")
+                raise(InstructionNotImplementedError(f"operation {op} not found :("))
 
         return result & self.mask

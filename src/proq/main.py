@@ -3,7 +3,6 @@ import argparse
 from proq.cpu import CPU
 from proq.util.logging import Logger
 
-int1 = False # for testing interrupts ignore ts
 
 def entry():
     parser = argparse.ArgumentParser(description="shitass cpu emulator")
@@ -11,6 +10,7 @@ def entry():
     parser.add_argument("--memsize", "--mem", "-m", type=int, default = 4096, help = "size of RAM in bytes")
     parser.add_argument("--romsize", "--rom", "-r", type=int, default = 57344, help = "size of ROM in bytes")
     parser.add_argument("--reset", "--start", "-s", type=int, default = 0, help = "memory address containing start of program")
+    parser.add_argument("--debug", "-d", action='store_true', help = "allow debug logs")
 
     args = parser.parse_args()
 
@@ -20,7 +20,7 @@ def entry():
         with open(args.binary, 'rb') as f:
             binary = f.read()
 
-    logger = Logger(default = True, stdout = True, setup = True)
+    logger = Logger(default = args.debug, stdout = True, setup = True)
     logger.setup("logger started")
 
     cpu = CPU(
@@ -28,7 +28,8 @@ def entry():
         logger = logger,
         memsize = args.memsize,
         romsize = args.romsize,
-        flag_debug = True
+        flag_debug = args.debug,
+        start_pos = args.reset
     )
 
     logger.setup("starting CPU")
@@ -38,8 +39,5 @@ def entry():
         cpu.tick()
 
 def check_io(cpu: CPU):
-    global int1
     # check keyboard and display to screen here
-    if int1:
-        cpu.interrupt.value = 1
-        int1 = False
+    pass
