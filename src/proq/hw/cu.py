@@ -37,9 +37,21 @@ class CU:
                 pass
 
         if interrupt.value != 0:
+            interrupt.value = 0 # reset
+            if not self.registers.flags.IF:
+                pass
             self.logger.interrupt(f"loading interrupt {hex(int(interrupt), 2)}")
-            # ADD INTERRUPT LOGIC HERE LMAO
-            return
+            self.registers.PC = self.mu.read(0xF100 + interrupt.value)
+            self.registers.flags.IF = False
+            self.registers.flags.TF = False
+
+            # push flags and PC
+            self.registers.SP -= 1
+            self.mu.write(self.registers.SP, self.registers.flags.export_int())
+            self.registers.SP -= 1
+            self.mu.write(self.registers.SP, (self.registers.PC >> 8) & 0xFF) # high
+            self.registers.SP -= 1
+            self.mu.write(self.registers.SP, self.registers.PC & 0xFF) # low
 
         opcode = self.mu.read(self.registers.PC)
         self.registers.IR = opcode

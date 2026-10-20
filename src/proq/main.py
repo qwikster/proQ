@@ -3,6 +3,7 @@ import argparse
 from proq.cpu import CPU
 from proq.util.logging import Logger
 
+int1 = False # for testing interrupts ignore ts
 
 def entry():
     parser = argparse.ArgumentParser(description="shitass cpu emulator")
@@ -37,4 +38,8 @@ def entry():
         cpu.tick()
 
 def check_io(cpu: CPU):
-    pass # check keyboard and display to screen here
+    global int1
+    # check keyboard and display to screen here
+    if int1:
+        cpu.interrupt.value = 1
+        int1 = False

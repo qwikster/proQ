@@ -13,6 +13,19 @@ class Flags:
     IF: bool = False # enable interrupts
     TF: bool = False # Trap: step one at a time
 
+    def export_int(self):
+        value = 0b000000
+        flags = [self.ZF, self.CF, self.SF, self.OF, self.IF, self.TF]
+        for i, flag in enumerate(flags):
+            if flag:
+                value |= (1 << i)
+        return value
+
+    def import_int(self, value: int):
+        (self.ZF, self.CF, self.SF, self.OF, self.IF, self.TF) = (
+            bool((value >> i) & 1) for i in range(6)
+        )
+
 @dataclass
 class Registers:
     log: Logger

@@ -39,6 +39,14 @@ class StdoutOutput(MemoryDevice):
         log.stdout(chr(value))
         # print(chr(value), end = "", flush = True)
 
+class IVT(MemoryDevice): # 256 values
+    def __init__(self):
+        self.ivt = [0x0000] * 256
+    def read(self, addr: int) -> int:
+        return self.ivt[addr]
+    def write(self, addr: int, value: int) -> None:
+        self.ivt[addr] = value
+
 class ResetBytes(MemoryDevice):
     def __init__(self, program_start_address: int = 0x0000):
         self.bytes = program_start_address
