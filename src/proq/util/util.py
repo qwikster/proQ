@@ -1,4 +1,5 @@
 from enum import IntEnum
+from typing import Union
 
 
 _hex = hex
@@ -45,3 +46,11 @@ class RegisterOperand(IntEnum):
     REG_IR = 13
     REG_SP = 14
     REG_FLAG = 15
+
+def decode_mode_bytes(byte: int, reg: bool = False) -> tuple[TypeOperand, TypeOperand] | tuple[RegisterOperand, RegisterOperand]
+    dst = (byte >> 4) & 0b1111 # left (upper) bytes
+    src = byte & 0b1111 # right (lower) bytes
+    if not reg:
+        return (TypeOperand(dst), TypeOperand(src))
+    else:
+        return (RegisterOperand(dst), RegisterOperand(src))

@@ -38,7 +38,7 @@ class CU:
 
         if interrupt.value != 0:
             self.logger.interrupt(f"loading interrupt {hex(int(interrupt), 2)}")
-            input()
+            # ADD INTERRUPT LOGIC HERE LMAO
             return
 
         opcode = self.mu.read(self.registers.PC)
