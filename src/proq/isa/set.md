@@ -92,6 +92,16 @@ SETSP - R|M|I
 0xE0 - 0xEF > System (Reserved for mode toggles) 
 0xF0 - 0xFF > System (3 used)
 
+# MOST IMPORTANT
+MOV
+JMP
+CMP/TEST
+JA/JB/E
+CALL/RET
+PUSH/POP
+ADD/SUB/MUL/DIV/INC/DEC ignore signed and boolean for now
+
+
 # OPCODES
 0x00 nop | No Operation (Alias)
 0x01 jmp | Jump Address

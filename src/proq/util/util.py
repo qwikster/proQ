@@ -69,12 +69,13 @@ class RegisterOperand(IntEnum):
     REG_SP = 14
     REG_FLAG = 15
 
-def decode_mode_bytes(byte: int, reg: bool = False) -> tuple[TypeOperand, TypeOperand] | tuple[RegisterOperand, RegisterOperand]:
+def decode_mode_bytes(byte: int, reg: bool = False) -> tuple[TypeOperand, TypeOperand, bool] | tuple[RegisterOperand, RegisterOperand, bool]:
     dst = (byte >> 4) & 0b1111 # left (upper) bytes
     src = byte & 0b1111 # right (lower) bytes
     if not reg:
         if dst >= len(TypeOperand) or src >= len(TypeOperand):
             raise InvalidModeByteError
-        return (TypeOperand(dst), TypeOperand(src))
+        needs_reg_byte = (dst == 1) or (src == 1)
+        return (TypeOperand(dst), TypeOperand(src), needs_reg_byte)
     else:
-        return (RegisterOperand(dst), RegisterOperand(src))
+        return (RegisterOperand(dst), RegisterOperand(src), True)

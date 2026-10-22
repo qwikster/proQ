@@ -1,5 +1,4 @@
 from collections.abc import Iterator
-from time import sleep
 
 from proq.isa.base import Instruction
 

@@ -5,7 +5,7 @@ from enum import IntEnum
 class Op(IntEnum):
     NOP_ALIAS = 0x00
 
-
+    MOV = 0xA0
 
     NOP = 0xF0
     CPUID = 0xFE

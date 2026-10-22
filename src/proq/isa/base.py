@@ -28,8 +28,11 @@ class Instruction:
         self.mu = mu
         self.registers = registers
 
-    def operand(self, idx: int = 1) -> int: # 1-indexed
+    def operand(self, idx: int = 1) -> int: # 1-indexed, *gets address*
         return self.registers.PC + idx
+
+    def read_op(self, idx: int = 1) -> int:
+        return self.mu.read(self.operand(idx))
 
     def pci(self, amt: int = 1): # 1-indexed
         self.registers.PC += amt
