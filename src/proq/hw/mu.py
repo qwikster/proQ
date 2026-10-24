@@ -107,11 +107,12 @@ class MU:
             raise EmulatorMemoryError(f"error writing to {hex(addr)}: {e}")
 
     # big endian accessors
-    def read_word(self, address: int) -> int:
+    def read_len(self, address: int, size: int = 1) -> int:
         high_byte = self.read(address)
         low_byte = self.read(address + 1)
         return (high_byte << 8) | low_byte
 
-    def write_word(self, address: int, value: int) -> None:
-        self.write(address, value >> 8)
-        self.write(address + 1, value & 0xFF)
+    def write_len(self, address: int, value: int, size: int = 1) -> None:
+        for i in range(size):
+            byte = (value >> (8 * (size - 1 - i))) & 0xFF
+            self.write(address + i, byte)

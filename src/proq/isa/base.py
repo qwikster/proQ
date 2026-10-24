@@ -31,8 +31,12 @@ class Instruction:
     def operand(self, idx: int = 1) -> int: # 1-indexed, *gets address*
         return self.registers.PC + idx
 
-    def read_op(self, idx: int = 1) -> int:
-        return self.mu.read(self.operand(idx))
+    def read_op(self, idx: int = 1, size: int = 1) -> int:
+        value = 0
+        for i in range(size):
+            value = (value << 8) | self.mu.read(self.operand(idx + i))
+        return value
+
 
     def pci(self, amt: int = 1): # 1-indexed
         self.registers.PC += amt

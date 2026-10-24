@@ -52,11 +52,12 @@ class TypeOperand(IntEnum):
     MEMORY_ID = 3 # indirect [Reg]
 
 class RegisterOperand(IntEnum):
+    # also used for immediate value size signalling
     REG_0 = 0
-    REG_1 = 1
-    REG_2 = 2
+    REG_1_BYTE = 1
+    REG_2_WORD = 2
     REG_3 = 3
-    REG_4 = 4
+    REG_4_DWORD = 4
     REG_5 = 5
     REG_6 = 6
     REG_7 = 7
@@ -75,7 +76,7 @@ def decode_mode_bytes(byte: int, reg: bool = False) -> tuple[TypeOperand, TypeOp
     if not reg:
         if dst >= len(TypeOperand) or src >= len(TypeOperand):
             raise InvalidModeByteError
-        needs_reg_byte = (dst == 1) or (src == 1)
+        needs_reg_byte = dst in (0, 1, 3) or src in (0, 1, 3)
         return (TypeOperand(dst), TypeOperand(src), needs_reg_byte)
     else:
         return (RegisterOperand(dst), RegisterOperand(src), True)

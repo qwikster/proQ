@@ -1,7 +1,8 @@
 from collections.abc import Iterator
 
 from proq.isa.base import Instruction
-from proq.util.util import decode_mode_bytes, TypeOperand, RegisterOperand
+from proq.util.util import RegisterOperand, TypeOperand, decode_mode_bytes
+
 
 class MOV(Instruction):
     def execute(self) -> Iterator[None]:
@@ -15,12 +16,16 @@ class MOV(Instruction):
         self.pci(2 if reg else 1)
         yield
 
-        value = 0
+        length, value = (0, 0)
         match src:
             case TypeOperand.IMMEDIATE:
-                value = self.read_op(1)
-                self.pci()
-            case TypeOperand.REGISTER:
+                length = src_reg
+                value = self.read_op(1, size = src_reg)
+                self.pci(src_reg)
+            case TypeOperand.MEMORY_DR:
+                value = self.mu.read(self.read_op(1, size = 2))
+                self.pci(2)
+            case TypeOperand.REGISTER | TypeOperand.MEMORY_ID:
                 match src_reg:
                     case RegisterOperand.REG_FLAG:
                         value = self.registers.flags.export_int()
@@ -30,9 +35,14 @@ class MOV(Instruction):
                         value = self.registers.SP
                     case RegisterOperand.REG_IR:
                         value = self.registers.IR
-                    case _:
-                        value = self.registers.GPR[src_reg]
-            case TypeOperand.MEMORY_DR:
-                value = self.read_op()
+                    case _: # MEMORY_ID must be this value
+                        if src == TypeOperand.REGISTER:
+                            value = self.registers.GPR[src_reg]
+                        else:
+                            value = self.mu.read(self.registers.GPR[src_reg])
 
-        # NOTE: no idea if the read_op addresses line up, fix that, MEMORY_IR may need to be put in the same category as `case TypeOperand.REGISTER:`.
+        match dst:
+            case TypeOperand.MEMORY_DR:
+                self.mu.write(self.read_op(1, size = 2), value)
+
+# (high_byte << 8) | low_byte

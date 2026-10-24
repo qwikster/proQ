@@ -56,7 +56,7 @@ class CU:
             self.registers.SP -= 1
             self.mu.write(self.registers.SP, self.registers.flags.export_int())
             self.registers.SP -= 2
-            self.mu.write_word(self.registers.SP, self.registers.PC)
+            self.mu.write_len(self.registers.SP, self.registers.PC)
 
             self.registers.PC = self.mu.read(0xF100 + intp)
             self.registers.flags.IF = False
