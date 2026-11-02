@@ -9,7 +9,7 @@ class MOV(Instruction):
         dst_reg = 0
         src_reg = 0
 
-        dst, src, reg = decode_mode_bytes(self.read_op(1), False)
+        dst, src, size, special, reg = decode_mode_bytes(self.read_op(1), False)
         if reg:
             dst_reg, src_reg, reg = decode_mode_bytes(self.read_op(2), True)
 
@@ -41,6 +41,7 @@ class MOV(Instruction):
                         else:
                             value = self.mu.read(self.registers.GPR[src_reg])
 
+        yield
         match dst:
             case TypeOperand.MEMORY_DR:
                 self.mu.write(self.read_op(1, size = 2), value)
