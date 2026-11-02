@@ -1,8 +1,4 @@
 from collections import deque
-from enum import IntEnum
-from typing import NamedTuple
-
-from proq.util.exceptions import InvalidModeByteError
 
 _hex = hex
 def hex(val: int, pad: int = 4) -> str:
@@ -45,48 +41,3 @@ class Interrupts:
 
     def __call__(self, value: int):
         self.new(value)
-
-class TypeOperand(IntEnum):
-    IMMEDIATE = 0
-    REGISTER  = 1
-    MEMORY_DR = 2 # direct [Addr]
-    MEMORY_ID = 3 # indirect [Reg]
-
-class SizeOperand(IntEnum):
-    ZERO = 0
-    BYTE = 1
-    WORD = 2
-    DWORD = 3
-
-class RegisterOperand(IntEnum):
-    REG_0 = 0
-    REG_1 = 1
-    REG_2 = 2
-    REG_3 = 3
-    REG_4 = 4
-    REG_5 = 5
-    REG_6 = 6
-    REG_7 = 7
-    REG_8 = 8
-    REG_9 = 9
-    REG_10 = 10
-    REG_11 = 11
-    REG_PC = 12
-    REG_IR = 13
-    REG_SP = 14
-    REG_FLAG = 15
-
-def decode_mode_bytes(byte: int, reg: bool = False) -> tuple[TypeOperand, TypeOperand, SizeOperand, int, bool] | tuple[RegisterOperand, RegisterOperand, bool]:
-    dst = (byte >> 6) & 0b11
-    src = (byte >> 4) & 0b11
-    size = (byte >> 2) & 0b11
-    special = byte & 0b11
-    if not reg:
-        if dst >= len(TypeOperand) or src >= len(TypeOperand):
-            raise InvalidModeByteError
-        needs_reg_byte = dst in (1, 3) or src in (1, 3)
-        return (TypeOperand(dst), TypeOperand(src), SizeOperand(size), special, needs_reg_byte)
-    else:
-        dst = (byte >> 4) & 0b1111 # left (upper) bytes
-        src = byte & 0b1111 # right (lower) bytes
-        return (RegisterOperand(dst), RegisterOperand(src), True)

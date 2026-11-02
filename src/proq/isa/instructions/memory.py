@@ -1,27 +1,19 @@
 from collections.abc import Iterator
 
-from proq.isa.base import Instruction
-from proq.util.util import RegisterOperand, TypeOperand, decode_mode_bytes
+from proq.isa.base import Instruction, RegisterOperand, SizeOperand, TypeOperand
 
 
 class MOV(Instruction):
     def execute(self) -> Iterator[None]:
-        dst_reg = 0
-        src_reg = 0
-
-        dst, src, size, special, reg = decode_mode_bytes(self.read_op(1), False)
-        if reg:
-            dst_reg, src_reg, reg = decode_mode_bytes(self.read_op(2), True)
-
-        self.pci(2 if reg else 1)
+        mode = self.decode_mode_bytes(1)
+        self.pci(2 if mode.has_registers else 1)
         yield
 
-        length, value = (0, 0)
-        match src:
+        value = 0
+        match mode.src:
             case TypeOperand.IMMEDIATE:
-                length = src_reg
-                value = self.read_op(1, size = src_reg)
-                self.pci(src_reg)
+                value = self.read_op(1, size = mode.reg_src)
+                self.pci(mode.reg_src)
             case TypeOperand.MEMORY_DR:
                 value = self.mu.read(self.read_op(1, size = 2))
                 self.pci(2)

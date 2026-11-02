@@ -3,6 +3,3 @@ class EmulatorMemoryError(MemoryError):
 
 class InstructionNotImplementedError(NotImplementedError):
     pass
-
-class InvalidModeByteError(NotImplementedError):
-    pass
