@@ -12,6 +12,7 @@ class Logger:
     alu: LogMethod
     interrupt: LogMethod
     stdout: LogMethod
+    modes: LogMethod
 
     start_time = time.perf_counter()
 

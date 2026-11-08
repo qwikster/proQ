@@ -71,7 +71,7 @@ class CU:
             interrupt(0x01) # invalid opcode
             return
 
-        instance = instruction(self.mu, self.alu, self.registers)
+        instance = instruction(self.mu, self.alu, self.registers, self.logger)
         self.logger.cu(f"Running instruction {hex(opcode, 2)} ({instruction.__name__})")
         self.iterable = instance.execute()
 

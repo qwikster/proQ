@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, ClassVar, NamedTuple
 
 from proq.isa.set import Op
 from proq.util.exceptions import InvalidModeByte
+from proq.util.logging import Logger
 
 if TYPE_CHECKING:
     from proq.hw.alu import ALU
@@ -67,10 +68,11 @@ class Instruction:
         except KeyError:
             Instruction.skipped.append(cls.__name__)
 
-    def __init__(self, mu: MU, alu: ALU, registers: Registers):
+    def __init__(self, mu: MU, alu: ALU, registers: Registers, logger: Logger):
         self.alu = alu
         self.mu = mu
         self.registers = registers
+        self.logger = logger
 
         self.pc_offset = 0
         self.lock_pc = False
@@ -104,13 +106,14 @@ class Instruction:
             reg_byte = self.read_op(offset + 1)
             reg_dst = RegisterOperand((reg_byte >> 4) & 0b1111) # left
             reg_src = RegisterOperand(reg_byte & 0b1111) # right
-            self.pc_offset += 2 # opcode + mode byte(s)
+            self.pc_offset += 3 # opcode + mode byte(s)
         else:
             # shouldnt actually be 0, unreachable default
-            self.pc_offset += 3
+            self.pc_offset += 4
             reg_dst, reg_src = (RegisterOperand(0), RegisterOperand(0))
 
         self.mode = ModeBytes(dst, src, size, special, has_registers, reg_dst, reg_src)
+        self.logger.modes(str(self.mode))
 
     def read_register(self, id: RegisterOperand, indirect: bool = False) -> int:
         if indirect and id in (RegisterOperand.REG_FLAG, RegisterOperand.REG_IR):
@@ -179,13 +182,16 @@ class Instruction:
                 if self.mode.size.get_size == SizeOperand.DWORD:
                     raise InvalidModeByte("Can't write a dword to a register")
                 self.write_register(self.mode.reg_dst, value)
+                self.logger.modes(f"wrote {value} to {self.mode.reg_dst}")
 
             case TypeOperand.MEMORY_DR:
                 offset = 3 if self.mode.has_registers else 2
                 self.mu.write_len(self.read_op(offset, 2), value, self.mode.size.get_size())
+                self.logger.modes(f"wrote {value} of {self.mode.size.get_size()} to {self.read_op(offset, 2)}")
 
             case TypeOperand.MEMORY_ID:
                 self.write_register(self.mode.reg_dst, value, indirect = True)
+                self.logger.modes(f"wrote {value} to reg {self.mode.reg_dst}")
 
     def execute(self) -> Iterator[None]:
         yield
