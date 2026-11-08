@@ -5,6 +5,7 @@ from enum import IntEnum
 from typing import TYPE_CHECKING, ClassVar, NamedTuple
 
 from proq.isa.set import Op
+from proq.util.exceptions import InvalidModeByte
 
 if TYPE_CHECKING:
     from proq.hw.alu import ALU
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from proq.hw.register import Registers
 
 class TypeOperand(IntEnum):
-    IMMEDIATE = 0
+    IMMEDIATE_OR_NULL = 0
     REGISTER  = 1
     MEMORY_DR = 2 # direct [Addr]
     MEMORY_ID = 3 # indirect [Reg]
@@ -71,6 +72,9 @@ class Instruction:
         self.mu = mu
         self.registers = registers
 
+        self.pc_offset = 0
+        self.lock_pc = False
+
     def operand(self, idx: int = 1) -> int: # 1-indexed, *gets address*
         return self.registers.PC + idx
 
@@ -84,7 +88,11 @@ class Instruction:
         self.registers.PC += amt
         self.registers.PC &= 0xFFFF
 
-    def decode_mode_bytes(self, offset: int = 1) -> ModeBytes:
+    def pcio(self) -> None: # use on finish: move pc to end
+        if not self.lock_pc:
+            self.pci(self.pc_offset)
+
+    def decode_mode_bytes(self, offset: int = 1) -> None:
         byte = self.read_op(offset)
 
         dst = TypeOperand((byte >> 6) & 0b11)
@@ -96,11 +104,88 @@ class Instruction:
             reg_byte = self.read_op(offset + 1)
             reg_dst = RegisterOperand((reg_byte >> 4) & 0b1111) # left
             reg_src = RegisterOperand(reg_byte & 0b1111) # right
+            self.pc_offset += 2 # opcode + mode byte(s)
         else:
             # shouldnt actually be 0, unreachable default
+            self.pc_offset += 3
             reg_dst, reg_src = (RegisterOperand(0), RegisterOperand(0))
 
-        return ModeBytes(dst, src, size, special, has_registers, reg_dst, reg_src)
+        self.mode = ModeBytes(dst, src, size, special, has_registers, reg_dst, reg_src)
+
+    def read_register(self, id: RegisterOperand, indirect: bool = False) -> int:
+        if indirect and id in (RegisterOperand.REG_FLAG, RegisterOperand.REG_IR):
+            raise InvalidModeByte("Tried to read indirect from special register")
+        match id:
+            case RegisterOperand.REG_FLAG:
+                return self.registers.flags.export_int()
+            case RegisterOperand.REG_PC:
+                return self.registers.PC
+            case RegisterOperand.REG_IR:
+                return self.registers.IR
+            case RegisterOperand.REG_SP:
+                return self.registers.SP
+            case _:
+                return self.registers.GPR[id]
+
+    def write_register(self, id: RegisterOperand, value: int, indirect: bool = False) -> None:
+        if indirect and id in (RegisterOperand.REG_FLAG, RegisterOperand.REG_IR):
+            raise InvalidModeByte("Tried to write indirect to special register")
+        match id:
+            case RegisterOperand.REG_FLAG:
+                self.registers.flags.import_int(value)
+            case RegisterOperand.REG_IR:
+                raise InvalidModeByte("No point in writing to IR")
+            case RegisterOperand.REG_PC:
+                if indirect:
+                    self.mu.write_len(self.registers.PC, self.mode.size.get_size(), value)
+                else:
+                    self.lock_pc = True
+                    self.registers.PC = value & 0xFFFF
+            case RegisterOperand.REG_SP:
+                if indirect:
+                    self.mu.write_len(self.registers.SP, self.mode.size.get_size(), value)
+                else:
+                    self.registers.SP = value & 0xFFFF
+            case _:
+                self.registers.GPR[id] = value
+
+    def get_src_val(self) -> int:
+        self.pc_offset += 2 if self.mode.dst == TypeOperand.MEMORY_DR else 0 # size that memory address could take
+
+        match self.mode.src:
+            case TypeOperand.IMMEDIATE_OR_NULL:
+                value = self.read_op(self.pc_offset, self.mode.size.get_size())
+                self.pc_offset += self.mode.size.get_size()
+                return value
+
+            case TypeOperand.REGISTER:
+                return self.read_register(self.mode.reg_src)
+
+            case TypeOperand.MEMORY_DR:
+                addr = self.mu.read_len(self.read_op(self.pc_offset), 2)
+                self.pc_offset += 2
+                return self.mu.read_len(addr, self.mode.size.get_size())
+
+            case TypeOperand.MEMORY_ID:
+                addr = self.read_register(self.mode.reg_src, indirect = True)
+                return self.mu.read_len(addr, self.mode.size.get_size())
+
+    def write_dst(self, value: int) -> None:
+        match self.mode.dst:
+            case TypeOperand.IMMEDIATE_OR_NULL: # shouldn't happen!
+                raise RuntimeError("Tried to check destination on an operation that only takes a source value")
+
+            case TypeOperand.REGISTER:
+                if self.mode.size.get_size == SizeOperand.DWORD:
+                    raise InvalidModeByte("Can't write a dword to a register")
+                self.write_register(self.mode.reg_dst, value)
+
+            case TypeOperand.MEMORY_DR:
+                offset = 3 if self.mode.has_registers else 2
+                self.mu.write_len(self.read_op(offset, 2), value, self.mode.size.get_size())
+
+            case TypeOperand.MEMORY_ID:
+                self.write_register(self.mode.reg_dst, value, indirect = True)
 
     def execute(self) -> Iterator[None]:
         yield

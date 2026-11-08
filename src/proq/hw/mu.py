@@ -108,9 +108,11 @@ class MU:
 
     # big endian accessors
     def read_len(self, address: int, size: int = 1) -> int:
-        high_byte = self.read(address)
-        low_byte = self.read(address + 1)
-        return (high_byte << 8) | low_byte
+            value = 0
+            for i in range(size):
+                byte = self.read(address + i)
+                value = (value << 8) | byte
+            return value
 
     def write_len(self, address: int, value: int, size: int = 1) -> None:
         for i in range(size):
