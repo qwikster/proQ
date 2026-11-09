@@ -1,6 +1,7 @@
 import sys
 from time import sleep
 
+from proq.hw.stack import Stack
 import proq.isa.instructions  # noqa: F401 # Have to add this to force it to run proq.isa.instructions.__init__.py n do the stuff
 from proq.hw.alu import ALU
 from proq.hw.mu import MU
@@ -13,7 +14,7 @@ from proq.util.util import Interrupts, hex
 
 
 class CU:
-    def __init__(self, alu: ALU, mu: MU, registers: Registers, logger: Logger):
+    def __init__(self, alu: ALU, mu: MU, registers: Registers, stack: Stack, logger: Logger):
         for skipped in Instruction.skipped:
             logger.setup(f"Skipped unregistered instruction: {skipped}")
 
@@ -24,6 +25,7 @@ class CU:
         self.alu = alu
         self.mu = mu
         self.registers = registers
+        self.stack = stack
 
         self.logger = logger
 
@@ -71,7 +73,7 @@ class CU:
             interrupt(0x01) # invalid opcode
             return
 
-        instance = instruction(self.mu, self.alu, self.registers, self.logger)
+        instance = instruction(self.mu, self.alu, self.registers, self.stack self.logger)
         self.logger.cu(f"Running instruction {hex(opcode, 2)} ({instruction.__name__})")
         self.iterable = instance.execute()
 

@@ -2,7 +2,6 @@ from collections.abc import Iterator
 
 from proq.hw.alu import Ops
 from proq.isa.base import Instruction, RegisterOperand, SizeOperand
-from proq.isa.mixins import StackMixin
 from proq.util.exceptions import InvalidModeByte
 
 
@@ -19,7 +18,7 @@ class JMP(Instruction):
         self.write_register(RegisterOperand.REG_PC, self.get_src_val())
         yield
 
-class PUSH(Instruction, StackMixin):
+class PUSH(Instruction):
     def execute(self) -> Iterator[None]:
         self.decode_mode_bytes()
         if self.mode.size.get_size != 2:
@@ -32,13 +31,13 @@ class PUSH(Instruction, StackMixin):
         self.pcio()
         yield
 
-class POP(Instruction, StackMixin):
+class POP(Instruction):
     def execute(self) -> Iterator[None]:
         self.decode_mode_bytes()
         self.mode._replace(size = SizeOperand.BYTE) # must be one byte
         yield
 
-        self.write_dst(self.pop())
+        self.write_dst(self.stack.pop())
         yield
 
         self.pcio()
@@ -52,7 +51,7 @@ class RET(Instruction): # return
     def execute(self) -> Iterator[None]:
         yield
 
-class PUSHF(Instruction, StackMixin):
+class PUSHF(Instruction):
     def execute(self) -> Iterator[None]:
         yield
 

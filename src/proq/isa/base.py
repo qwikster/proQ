@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from enum import IntEnum
 from typing import TYPE_CHECKING, ClassVar, NamedTuple, Protocol
 
+from proq.hw.stack import Stack
 from proq.isa.set import Op
 from proq.util.exceptions import InvalidModeByte
 from proq.util.logging import Logger
@@ -68,9 +69,10 @@ class Instruction:
         except KeyError:
             Instruction.skipped.append(cls.__name__)
 
-    def __init__(self, mu: MU, alu: ALU, registers: Registers, logger: Logger):
+    def __init__(self, mu: MU, alu: ALU, registers: Registers, stack: Stack, logger: Logger):
         self.alu = alu
         self.mu = mu
+        self.stack = stack
         self.registers = registers
         self.logger = logger
 

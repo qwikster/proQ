@@ -2,6 +2,7 @@ from proq.hw.alu import ALU
 from proq.hw.cu import CU
 from proq.hw.mu import IVT, MU, RAM, ROM, ResetBytes, StdoutOutput
 from proq.hw.register import Registers
+from proq.hw.stack import Stack
 from proq.util.exceptions import EmulatorMemoryError
 from proq.util.logging import Logger
 from proq.util.util import Interrupts, hex
@@ -37,10 +38,11 @@ class CPU:
 
         # Registers
         self.registers = Registers(self.log, stack_addr = romsize + memsize - 1, debug = flag_debug)
+        self.stack = Stack(self.registers, self.mu)
 
         # Instructions
         self.alu = ALU(self.registers)
-        self.cu = CU(self.alu, self.mu, self.registers, logger = logger)
+        self.cu = CU(self.alu, self.mu, self.registers, self.stack, logger = logger)
 
     def tick(self):
         self.cycle += 1
