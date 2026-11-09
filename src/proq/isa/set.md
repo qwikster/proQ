@@ -24,8 +24,6 @@ JS / JNS
 == memory stuff ==
 MOV - R|M destination - R|M|I source
 XCHG - swap dest/src
-WWORD - write 16 bit (big endian) - low byte R|M|I | value R|M|I
-RWORD - read 16 bit - address R|M|I - output R|M
 
 == mathematics / logic / bitwise ==
 ADD - carry flag
@@ -163,8 +161,6 @@ ADD/SUB/MUL/DIV/INC/DEC ignore signed and boolean for now
 [! 0x70 -> 0x9F ]
 0xA0 mov | Move Value
 0xA1 xchg | Exchange Source with Destination
-0xA2 wword | Write Word
-0xA3 rword | Read Word
 [! 0xA4 -> 0xBF ]
 0xC0 setzf | Set Zero Flag
 0xC1 setcf | Set Carry Flag

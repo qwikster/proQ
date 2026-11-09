@@ -13,5 +13,4 @@ class MOV(Instruction):
 
         self.write_dst(value)
         self.pcio()
-        input("done this thing")
         yield

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from enum import IntEnum
-from typing import TYPE_CHECKING, ClassVar, NamedTuple
+from typing import TYPE_CHECKING, ClassVar, NamedTuple, Protocol
 
 from proq.isa.set import Op
 from proq.util.exceptions import InvalidModeByte
@@ -195,3 +195,9 @@ class Instruction:
 
     def execute(self) -> Iterator[None]:
         yield
+
+class IsInstruction(Protocol):
+    alu: ALU
+    mu: MU
+    registers: Registers
+    logger: Logger
