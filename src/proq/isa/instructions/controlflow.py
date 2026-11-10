@@ -1,6 +1,5 @@
 from collections.abc import Iterator
 
-from proq.hw.alu import Ops
 from proq.isa.base import Instruction, RegisterOperand, SizeOperand
 from proq.util.exceptions import InvalidModeByte
 

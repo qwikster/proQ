@@ -1,11 +1,11 @@
 import sys
 from time import sleep
 
-from proq.hw.stack import Stack
-import proq.isa.instructions  # noqa: F401 # Have to add this to force it to run proq.isa.instructions.__init__.py n do the stuff
+import proq.isa.instructions  # noqa: F401 # Have to add this to force it to run proq.isa.instructions.__init__ n do the stuff
 from proq.hw.alu import ALU
 from proq.hw.mu import MU
 from proq.hw.register import Registers
+from proq.hw.stack import Stack
 from proq.isa.base import Instruction
 from proq.isa.set import Op
 from proq.util.exceptions import InstructionNotImplementedError
@@ -73,7 +73,7 @@ class CU:
             interrupt(0x01) # invalid opcode
             return
 
-        instance = instruction(self.mu, self.alu, self.registers, self.stack self.logger)
+        instance = instruction(self.mu, self.alu, self.registers, self.stack, self.logger)
         self.logger.cu(f"Running instruction {hex(opcode, 2)} ({instruction.__name__})")
         self.iterable = instance.execute()
 
