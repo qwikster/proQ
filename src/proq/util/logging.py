@@ -13,6 +13,7 @@ class Logger:
     interrupt: LogMethod
     stdout: LogMethod
     modes: LogMethod
+    stack: LogMethod
 
     start_time = time.perf_counter()
 

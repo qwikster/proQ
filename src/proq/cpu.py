@@ -38,7 +38,7 @@ class CPU:
 
         # Registers
         self.registers = Registers(self.log, stack_addr = romsize + memsize - 1, debug = flag_debug)
-        self.stack = Stack(self.registers, self.mu)
+        self.stack = Stack(self.registers, self.mu, self.log)
 
         # Instructions
         self.alu = ALU(self.registers)
