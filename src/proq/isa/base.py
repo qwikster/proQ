@@ -195,6 +195,21 @@ class Instruction:
                 self.write_register(self.mode.reg_dst, value, indirect = True)
                 self.logger.modes(f"wrote {value} to reg {self.mode.reg_dst}")
 
+    def read_dst(self) -> int:
+        match self.mode.dst:
+            case TypeOperand.IMMEDIATE_OR_NULL: # shouldn't happen!
+                raise RuntimeError("Destination cannot be Immediate")
+
+            case TypeOperand.REGISTER:
+                return self.read_register(self.mode.reg_dst)
+
+            case TypeOperand.MEMORY_DR:
+                offset = 3 if self.mode.has_registers else 2
+                return self.mu.read_len(self.read_op(offset, 2), self.mode.size.get_size())
+
+            case TypeOperand.MEMORY_ID:
+                return self.read_register(self.mode.reg_dst, indirect = True)
+
     def execute(self) -> Iterator[None]:
         yield
 
@@ -203,3 +218,9 @@ class IsInstruction(Protocol):
     mu: MU
     registers: Registers
     logger: Logger
+    def decode_mode_bytes(self) -> None:...
+    def read_dst(self) -> int:...
+    def get_src_val(self) -> int:...
+    def write_dst(self, value: int) -> None:...
+    def pcio(self) -> None:...
+    # def a(self) -> a:...
