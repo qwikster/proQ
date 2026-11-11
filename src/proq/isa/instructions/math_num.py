@@ -2,6 +2,7 @@ from collections.abc import Iterator
 
 from proq.hw.alu import Ops
 from proq.isa.base import Instruction
+from proq.isa.mixins import BasicMathInstruction
 
 
 class INC(Instruction):
@@ -34,28 +35,8 @@ class DEC(Instruction):
         self.pcio()
         yield
 
-class ADD(Instruction):
-    def execute(self) -> Iterator[None]:
-        self.decode_mode_bytes()
-        yield
+class ADD(BasicMathInstruction):
+    op = Ops.ADD
 
-        a = self.read_dst()
-        b = self.get_src_val()
-        yield
-
-        self.write_dst(self.alu.do(Ops.ADD, a, b))
-        self.pcio()
-        yield
-
-class SUB(Instruction):
-    def execute(self) -> Iterator[None]:
-        self.decode_mode_bytes()
-        yield
-
-        a = self.read_dst()
-        b = self.get_src_val()
-        yield
-
-        self.write_dst(self.alu.do(Ops.SUB, a, b))
-        self.pcio()
-        yield
+class SUB(BasicMathInstruction):
+    op = Ops.ADD

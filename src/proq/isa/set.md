@@ -58,6 +58,7 @@ DOINTP NUM - PUSH flags and PC, IRQ lookup
 
 ==  sys control  ==
 NOP - do nothing
+BREAK - wait for human input to continue
 HLT - stop processor until interrupt
 CPUID - nothing for now
 
@@ -183,6 +184,7 @@ ADD/SUB/MUL/DIV/INC/DEC ignore signed and boolean for now
 0xD5 delintp | Delete Interrupt
 [! 0xD6 -> 0xEF ]
 0xF0 nop | No Operation
+0xF1 break | Wait To Continue
 [! 0xF1 -> 0xFD ]
 0xFE cpuid | Get CPU Informations
 0xFF halt | Halt Processor

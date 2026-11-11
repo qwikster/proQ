@@ -1,3 +1,5 @@
+import time
+
 from proq.hw.alu import ALU
 from proq.hw.cu import CU
 from proq.hw.mu import IVT, MU, RAM, ROM, ResetBytes, StdoutOutput
@@ -47,3 +49,7 @@ class CPU:
     def tick(self):
         self.cycle += 1
         self.cu.tick(self.interrupt)
+
+        if (time.perf_counter() - (self.log.start_time + 0.5)) >= 1:
+            print(self.cycle)
+            input()

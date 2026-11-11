@@ -8,6 +8,12 @@ class NOP(Instruction):
         self.pci()
         yield
 
+class BREAK(Instruction):
+    def execute(self) -> Iterator[None]:
+        input("waiting... [press enter]")
+        self.pci()
+        yield
+
 class HALT(Instruction):
     def execute(self) -> Iterator[None]:
         self.pci()
