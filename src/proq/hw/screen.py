@@ -1,9 +1,13 @@
+import time
+from enum import IntEnum
+from typing import NamedTuple
+
 import pygame
 
 from proq.hw.mu import MemoryDevice
 from proq.util.exceptions import EmulatorMemoryError
 
-# 0: mode byte (push here to render)
+# 0: mode byte (push here to append)
 # 1: color byte
 # 2: get time since last frame in ms
 # 3: get frame number
@@ -11,24 +15,132 @@ from proq.util.exceptions import EmulatorMemoryError
 # 5: y0
 # 6: x1/width
 # 7: y1/height
+# 8: render byte (go!)
+
+class ScreenMode(IntEnum):
+    CLEAR = 0x00
+    PIXEL = 0x01
+    FILL = 0x02
+    LINE = 0x03
+    RECT = 0x04
+    RECT_OUTLINE = 0x05
+    CIRCLE = 0x06
+    CIRCLE_OUTLINE = 0x07
+    OVAL = 0x08
+    OVAL_OUTLINE = 0x09
+
+class ScreenOperation(NamedTuple):
+    mode: ScreenMode
+    color: int
+    x0: int
+    y0: int
+    x1: int
+    y1: int
 
 class Screen(MemoryDevice):
     def __init__(self, size: tuple[int, int]):
+        SCALE = 6
+
         pygame.init()
-        self.screen = pygame.display.set_mode(size)
+        self.screen = pygame.display.set_mode(tuple(SCALE * x for x in size))
         pygame.display.set_caption("proQ")
         self.clock = pygame.time.Clock()
 
+        self.vram = pygame.Surface(size)
+        self.queue: list[ScreenOperation] = []
+
+        self.color = 0
+        self.time = time.perf_counter()
+        self.last_frame = time.perf_counter()
+        self.frame = 0
+        self.x0 = 0
+        self.y0 = 0
+        self.x1 = 0
+        self.y1 = 0
+
     def read(self, addr: int) -> int:
-        return 0
+        match addr:
+            case 0x0000:
+                return self.queue[-1].mode
+            case 0x0001:
+                return self.color
+            case 0x0002:
+                return int((time.perf_counter() - self.last_frame) / 1000)
+            case 0x0003:
+                return self.frame
+            case 0x0004:
+                return self.x0
+            case 0x0005:
+                return self.y0
+            case 0x0006:
+                return self.x1
+            case 0x0007:
+                return self.y1
+            case _:
+                raise EmulatorMemoryError("invalid display address!")
 
     def write(self, addr: int, value: int):
         match addr:
-            case 0x0000:
-                pass
+            case 0x0000: # Mode/Push
+                self.queue.append(ScreenOperation(
+                    mode = ScreenMode(value),
+                    x0 = self.x0,
+                    x1 = self.x1,
+                    y0 = self.y0,
+                    y1 = self.y1,
+                    color = self.color
+                ))
             case 0x0001:
-                pass
+                self.color = value
+            case 0x0004:
+                self.x0 = value
+            case 0x0005:
+                self.y0 = value
+            case 0x0006:
+                self.x1 = value
+            case 0x0007:
+                self.y1 = value
+            case 0x0008:
+                self.render()
+            case _:
+                raise EmulatorMemoryError("invalid display address!")
 
     def render(self):
+        self.vram.lock()
+        for cmd in self.queue:
+            match cmd.mode:
+                case ScreenMode.CLEAR:
+                    self.vram.fill("black")
+                case ScreenMode.PIXEL:
+                    self.vram.fill(cmd.color, (cmd.x0, cmd.y0, 1, 1))
+                case ScreenMode.FILL:
+                    self.vram.fill(cmd.color)
+                case ScreenMode.LINE:
+                    pygame.draw.line(self.vram, cmd.color, (cmd.x0, cmd.y0), (cmd.x1, cmd.y1))
+                case ScreenMode.RECT:
+                    w = cmd.x1 - cmd.x0
+                    h = cmd.y1 - cmd.y0
+                    self.vram.fill(cmd.color, (cmd.x0, cmd.y0, w, h), 1)
+                case ScreenMode.RECT_OUTLINE:
+                    w = cmd.x1 - cmd.x0
+                    h = cmd.y1 - cmd.y0
+                    pygame.draw.rect(self.vram, cmd.color, (cmd.x0, cmd.y0, w, h), 1)
+                case ScreenMode.OVAL:
+                    w = cmd.x1 - cmd.x0
+                    h = cmd.y1 - cmd.y0
+                    pygame.draw.ellipse(self.vram, cmd.color, (cmd.x0, cmd.y0, w, h), 0)
+                case ScreenMode.OVAL_OUTLINE:
+                    w = cmd.x1 - cmd.x0
+                    h = cmd.y1 - cmd.y0
+                    pygame.draw.ellipse(self.vram, cmd.color, (cmd.x0, cmd.y0, w, h), 1)
+                case ScreenMode.CIRCLE:
+                    pygame.draw.circle(self.vram, cmd.color, (cmd.x0, cmd.y0), cmd.x1, 0)
+                case ScreenMode.CIRCLE_OUTLINE:
+                    pygame.draw.circle(self.vram, cmd.color, (cmd.x0, cmd.y0), cmd.x1, 1)
+
+        self.vram.unlock()
+        self.queue.clear()
+        pygame.transform.scale(self.vram, self.screen.get_size(), self.screen)
         pygame.display.flip()
-        self.clock.tick(60)
+        self.last_frame = time.perf_counter()
+        self.frame += 1
