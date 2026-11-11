@@ -20,7 +20,7 @@ class JMP(Instruction):
 class PUSH(Instruction): # pushes 2 bytes
     def execute(self) -> Iterator[None]:
         self.decode_mode_bytes()
-        if self.mode.size.get_size != 2:
+        if self.mode.size.get_size() != 2:
             raise InvalidModeByte("PUSH must be WORD")
         yield
 
@@ -33,10 +33,10 @@ class PUSH(Instruction): # pushes 2 bytes
 class POP(Instruction):
     def execute(self) -> Iterator[None]:
         self.decode_mode_bytes()
-        self.mode = self.mode._replace(size = SizeOperand.BYTE) # must be one byte
+        self.mode = self.mode._replace(size = SizeOperand.WORD) # must be one word
         yield
 
-        self.write_dst(self.stack.pop())
+        self.write_dst(self.stack.pop_len(2))
         yield
 
         self.pcio()
@@ -49,8 +49,10 @@ class CALL(Instruction):
             raise InvalidModeByte("CALL must be WORD")
         yield
 
+        dst = self.get_src_val()
+        self.pcio()
         self.stack.push_len(self.registers.PC + 1, 2) # return to instruction after CALL
-        self.registers.PC = self.get_src_val()
+        self.registers.PC = dst
         yield
 
 class RET(Instruction): # return

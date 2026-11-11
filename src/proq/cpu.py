@@ -41,6 +41,7 @@ class CPU:
         self.mu.map_device(0xF100, 0xF1FF, IVT())
         if flag_display:
             self.mu.map_device(0xF010, 0xF017, Screen((64, 48)))
+            # max size 256^2
 
         # Registers
         self.registers = Registers(self.log, stack_addr = romsize + memsize - 1, debug = flag_debug)

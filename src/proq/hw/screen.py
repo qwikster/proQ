@@ -10,12 +10,11 @@ from proq.util.exceptions import EmulatorMemoryError
 # 0: mode byte (push here to append)
 # 1: color byte
 # 2: get time since last frame in ms
-# 3: get frame number
-# 4: x0
-# 5: y0
-# 6: x1/width
-# 7: y1/height
-# 8: render byte (go!)
+# 3: x0
+# 4: y0
+# 5: x1/width
+# 6: y1/height
+# 7: render byte (go!)
 
 class ScreenMode(IntEnum):
     CLEAR = 0x00
@@ -44,10 +43,10 @@ class Screen(MemoryDevice):
         pygame.init()
         self.screen = pygame.display.set_mode(tuple(SCALE * x for x in size))
         pygame.display.set_caption("proQ")
-        self.clock = pygame.time.Clock()
 
         self.vram = pygame.Surface(size)
         self.queue: list[ScreenOperation] = []
+        self.palette = self.xterm_palette()
 
         self.color = 0
         self.time = time.perf_counter()
@@ -58,23 +57,23 @@ class Screen(MemoryDevice):
         self.x1 = 0
         self.y1 = 0
 
+        # TODO: events for keyboard + quit
+
     def read(self, addr: int) -> int:
         match addr:
             case 0x0000:
-                return self.queue[-1].mode
+                return len(self.queue) & 0xFF
             case 0x0001:
                 return self.color
             case 0x0002:
-                return int((time.perf_counter() - self.last_frame) / 1000)
+                return int((time.perf_counter() - self.last_frame) * 1000) & 0xFF
             case 0x0003:
-                return self.frame
-            case 0x0004:
                 return self.x0
-            case 0x0005:
+            case 0x0004:
                 return self.y0
-            case 0x0006:
+            case 0x0005:
                 return self.x1
-            case 0x0007:
+            case 0x0006:
                 return self.y1
             case _:
                 raise EmulatorMemoryError("invalid display address!")
@@ -82,61 +81,66 @@ class Screen(MemoryDevice):
     def write(self, addr: int, value: int):
         match addr:
             case 0x0000: # Mode/Push
-                self.queue.append(ScreenOperation(
-                    mode = ScreenMode(value),
-                    x0 = self.x0,
-                    x1 = self.x1,
-                    y0 = self.y0,
-                    y1 = self.y1,
-                    color = self.color
-                ))
+                try:
+                    self.queue.append(ScreenOperation(
+                        mode = ScreenMode(value),
+                        x0 = self.x0,
+                        x1 = self.x1,
+                        y0 = self.y0,
+                        y1 = self.y1,
+                        color = self.color
+                    ))
+                except ValueError:
+                    raise EmulatorMemoryError("invalid mode pushed to screen")
             case 0x0001:
                 self.color = value
-            case 0x0004:
+            case 0x0003:
                 self.x0 = value
-            case 0x0005:
+            case 0x0004:
                 self.y0 = value
-            case 0x0006:
+            case 0x0005:
                 self.x1 = value
-            case 0x0007:
+            case 0x0006:
                 self.y1 = value
-            case 0x0008:
+            case 0x0007:
                 self.render()
             case _:
                 raise EmulatorMemoryError("invalid display address!")
 
     def render(self):
         self.vram.lock()
+
         for cmd in self.queue:
+            color = self.palette[cmd.color]
             match cmd.mode:
                 case ScreenMode.CLEAR:
                     self.vram.fill("black")
                 case ScreenMode.PIXEL:
-                    self.vram.fill(cmd.color, (cmd.x0, cmd.y0, 1, 1))
+                    self.vram.fill(color, (cmd.x0, cmd.y0, 1, 1))
                 case ScreenMode.FILL:
-                    self.vram.fill(cmd.color)
+                    self.vram.fill(color)
                 case ScreenMode.LINE:
-                    pygame.draw.line(self.vram, cmd.color, (cmd.x0, cmd.y0), (cmd.x1, cmd.y1))
+                    pygame.draw.line(self.vram, color, (cmd.x0, cmd.y0), (cmd.x1, cmd.y1))
                 case ScreenMode.RECT:
-                    w = cmd.x1 - cmd.x0
+                    w = cmd.x1 - cmd.x0 + 1
                     h = cmd.y1 - cmd.y0
-                    self.vram.fill(cmd.color, (cmd.x0, cmd.y0, w, h), 1)
+                    self.vram.fill(color, (cmd.x0, cmd.y0, w, h)).normalize()
                 case ScreenMode.RECT_OUTLINE:
-                    w = cmd.x1 - cmd.x0
+                    w = cmd.x1 - cmd.x0+ 1
                     h = cmd.y1 - cmd.y0
-                    pygame.draw.rect(self.vram, cmd.color, (cmd.x0, cmd.y0, w, h), 1)
+                    pygame.draw.rect(self.vram, color, (cmd.x0, cmd.y0, w, h), 1).normalize()
                 case ScreenMode.OVAL:
-                    w = cmd.x1 - cmd.x0
+                    w = cmd.x1 - cmd.x0 + 1
                     h = cmd.y1 - cmd.y0
-                    pygame.draw.ellipse(self.vram, cmd.color, (cmd.x0, cmd.y0, w, h), 0)
+                    pygame.draw.ellipse(self.vram, color, (cmd.x0, cmd.y0, w, h), 0).normalize()
                 case ScreenMode.OVAL_OUTLINE:
-                    w = cmd.x1 - cmd.x0
+                    w = cmd.x1 - cmd.x0 + 1
                     h = cmd.y1 - cmd.y0
-                    pygame.draw.ellipse(self.vram, cmd.color, (cmd.x0, cmd.y0, w, h), 1)
+                    pygame.draw.ellipse(self.vram, color, (cmd.x0, cmd.y0, w, h), 1).normalize()
                 case ScreenMode.CIRCLE:
-                    pygame.draw.circle(self.vram, cmd.color, (cmd.x0, cmd.y0), cmd.x1, 0)
+                    pygame.draw.circle(self.vram, color, (cmd.x0, cmd.y0), cmd.x1, 0)
                 case ScreenMode.CIRCLE_OUTLINE:
-                    pygame.draw.circle(self.vram, cmd.color, (cmd.x0, cmd.y0), cmd.x1, 1)
+                    pygame.draw.circle(self.vram, color, (cmd.x0, cmd.y0), cmd.x1, 1)
 
         self.vram.unlock()
         self.queue.clear()
@@ -144,3 +148,12 @@ class Screen(MemoryDevice):
         pygame.display.flip()
         self.last_frame = time.perf_counter()
         self.frame += 1
+
+    # generated by AI im too lazy to make ts myself
+    def xterm_palette(self) -> list[tuple[int, ...]]:
+        system = ["000000", "cd0000", "00cd00", "cdcd00", "0000ee", "cd00cd", "00cdcd", "e5e5e5", "7f7f7f", "ff0000", "00ff00", "ffff00", "5c5cff", "ff00ff", "00ffff", "ffffff"]
+        pal = [tuple(bytes.fromhex(c)) for c in system]
+        level = lambda n: 0 if n == 0 else 55 + 40 * n
+        pal += [(level(r), level(g), level(b)) for r in range(6) for g in range(6) for b in range(6)]
+        pal += [(8 + 10 * i,) * 3 for i in range(24)]
+        return pal
