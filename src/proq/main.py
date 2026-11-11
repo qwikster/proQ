@@ -11,6 +11,7 @@ def entry():
     parser.add_argument("--romsize", "--rom", "-r", type=int, default = 57344, help = "size of ROM in bytes")
     parser.add_argument("--reset", "--start", "-s", type=int, default = 0, help = "memory address containing start of program")
     parser.add_argument("--debug", "-d", action='store_true', help = "allow debug logs")
+    parser.add_argument("--screen", "-o", action='store_true', help = "show screen")
 
     args = parser.parse_args()
 
@@ -29,6 +30,7 @@ def entry():
         memsize = args.memsize,
         romsize = args.romsize,
         flag_debug = args.debug,
+        flag_display = args.screen,
         start_pos = args.reset
     )
 

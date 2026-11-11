@@ -4,6 +4,7 @@ from proq.hw.alu import ALU
 from proq.hw.cu import CU
 from proq.hw.mu import IVT, MU, RAM, ROM, ResetBytes, StdoutOutput
 from proq.hw.register import Registers
+from proq.hw.screen import Screen
 from proq.hw.stack import Stack
 from proq.util.exceptions import EmulatorMemoryError
 from proq.util.logging import Logger
@@ -19,6 +20,7 @@ class CPU:
         memsize: int = 4096,  # 4K
         romsize: int = 57344, # 56K
         flag_debug: bool = False,
+        flag_display: bool = False,
         start_pos: int = 0x0000
     ):
         self.log = logger
@@ -37,6 +39,8 @@ class CPU:
         self.mu.map_device(0xF000, 0xF000, StdoutOutput())
         self.mu.map_device(0xFFFE, 0xFFFF, ResetBytes(start_pos))
         self.mu.map_device(0xF100, 0xF1FF, IVT())
+        if flag_display:
+            self.mu.map_device(0xF010, 0xF017, Screen((64, 48)))
 
         # Registers
         self.registers = Registers(self.log, stack_addr = romsize + memsize - 1, debug = flag_debug)
