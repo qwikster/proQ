@@ -198,7 +198,7 @@ class Instruction:
     def read_dst(self) -> int:
         match self.mode.dst:
             case TypeOperand.IMMEDIATE_OR_NULL: # shouldn't happen!
-                raise RuntimeError("Destination cannot be Immediate")
+                raise InvalidModeByte("Destination cannot be Immediate")
 
             case TypeOperand.REGISTER:
                 return self.read_register(self.mode.reg_dst)

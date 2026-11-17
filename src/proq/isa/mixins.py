@@ -11,7 +11,7 @@ class IsStackInstruction(IsInstruction, Protocol): #IsInstruction should only ap
 
 class BasicMathInstruction(Instruction):
     # use this to inherit and then it just does this automatically
-    op = Ops.NEG # change this!!!!!!
+    op: Ops
     def execute(self) -> Iterator[None]:
         self.decode_mode_bytes()
         yield
