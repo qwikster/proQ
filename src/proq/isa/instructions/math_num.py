@@ -6,6 +6,7 @@ from proq.isa.mixins import BasicMathInstruction
 
 
 class INC(Instruction):
+    has_src = False
     def execute(self) -> Iterator[None]:
         self.decode_mode_bytes()
         yield
@@ -21,6 +22,7 @@ class INC(Instruction):
         yield
 
 class DEC(Instruction):
+    has_src = False
     def execute(self) -> Iterator[None]:
         self.decode_mode_bytes()
         yield
@@ -35,8 +37,22 @@ class DEC(Instruction):
         self.pcio()
         yield
 
+class NOT(Instruction):
+    has_src = False
+    def execute(self) -> Iterator[None]:
+        self.decode_mode_bytes()
+        yield
+
+        value = self.read_dst()
+        value = self.alu.do(Ops.NOT, value, 1)
+        yield
+
+        self.write_dst(value)
+        self.pcio()
+        yield
+
 class ADD(BasicMathInstruction):
     op = Ops.ADD
 
 class SUB(BasicMathInstruction):
-    op = Ops.ADD
+    op = Ops.SUB

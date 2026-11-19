@@ -37,5 +37,6 @@ class Op(IntEnum):
 
     NOP = 0xF0
     BREAK = 0xF1
+    RAND = 0xF9
     CPUID = 0xFE
     HALT = 0xFF

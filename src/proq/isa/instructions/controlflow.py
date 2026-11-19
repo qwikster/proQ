@@ -5,11 +5,13 @@ from proq.util.exceptions import InvalidModeByte
 
 
 class NOP_ALIAS(Instruction):
+    has_dst = has_src = False
     def execute(self) -> Iterator[None]:
         self.pci()
         yield
 
 class JMP(Instruction):
+    has_dst = False
     def execute(self) -> Iterator[None]:
         self.decode_mode_bytes()
         yield
@@ -18,10 +20,10 @@ class JMP(Instruction):
         yield
 
 class PUSH(Instruction): # pushes 2 bytes
+    has_dst = False
+    required_size = SizeOperand.WORD
     def execute(self) -> Iterator[None]:
         self.decode_mode_bytes()
-        if self.mode.size.get_size() != 2:
-            raise InvalidModeByte("PUSH must be WORD")
         yield
 
         self.stack.push_len(self.get_src_val(), 2)
@@ -31,6 +33,8 @@ class PUSH(Instruction): # pushes 2 bytes
         yield
 
 class POP(Instruction):
+    has_src = False
+    required_size = SizeOperand.WORD
     def execute(self) -> Iterator[None]:
         self.decode_mode_bytes()
         self.mode = self.mode._replace(size = SizeOperand.WORD) # must be one word
@@ -43,10 +47,10 @@ class POP(Instruction):
         yield
 
 class CALL(Instruction):
+    has_dst = False
+    required_size = SizeOperand.WORD
     def execute(self) -> Iterator[None]:
         self.decode_mode_bytes()
-        if self.mode.size.get_size() != 2:
-            raise InvalidModeByte("CALL must be WORD")
         yield
 
         dst = self.get_src_val()
@@ -56,12 +60,14 @@ class CALL(Instruction):
         yield
 
 class RET(Instruction): # return
+    has_src = has_dst = False
     def execute(self) -> Iterator[None]:
         self.registers.PC = self.stack.pop_len(2)
         yield
         yield
 
 class PUSHF(Instruction):
+    has_src = has_dst = False
     def execute(self) -> Iterator[None]:
         self.stack.push_flags()
         yield
@@ -69,6 +75,7 @@ class PUSHF(Instruction):
         yield
 
 class POPF(Instruction):
+    has_src = has_dst = False
     def execute(self) -> Iterator[None]:
         self.stack.pop_flags()
         yield

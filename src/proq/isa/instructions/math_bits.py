@@ -6,5 +6,5 @@ from proq.isa.mixins import BasicMathInstruction
 #
 # i could just copy paste that but instead here have some Sexy OOP Logic
 
-for name in ("AND", "OR", "NOT", "XOR", "SHL", "SHR", "ROL", "ROR"):
+for name in ("AND", "OR", "XOR", "SHL", "SHR", "ROL", "ROR"):
     globals()[name] = type(name, (BasicMathInstruction,), {"op": getattr(Ops, name)})

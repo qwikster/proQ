@@ -1,6 +1,7 @@
+import random
 from collections.abc import Iterator
 
-from proq.isa.base import Instruction
+from proq.isa.base import Instruction, SizeOperand
 
 
 class NOP(Instruction):
@@ -28,4 +29,18 @@ class CPUID(Instruction): # yea idk what to do here
         self.registers[2] = 0x7630 # v0
         yield
         self.pci()
+        yield
+
+class RAND(Instruction): # get random byte
+    required_size = SizeOperand.BYTE
+    def execute(self) -> Iterator[None]:
+        self.decode_mode_bytes()
+        yield
+
+        limit = (val := self.get_src_val()) or 0xFF
+        result = random.randint(0, limit)
+        yield
+
+        self.write_dst(result)
+        self.pcio()
         yield
