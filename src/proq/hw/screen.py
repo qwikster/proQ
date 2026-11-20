@@ -41,7 +41,11 @@ class Screen(MemoryDevice):
         SCALE = 6
 
         pygame.init()
-        self.screen = pygame.display.set_mode(tuple(SCALE * x for x in size))
+        self.screen = pygame.display.set_mode(
+            tuple(SCALE * x for x in size),
+            pygame.RESIZABLE
+        )
+        # self.screen = pygame.display.set_mode(tuple(SCALE * x for x in size))
         pygame.display.set_caption("proQ")
 
         self.vram = pygame.Surface(size)
